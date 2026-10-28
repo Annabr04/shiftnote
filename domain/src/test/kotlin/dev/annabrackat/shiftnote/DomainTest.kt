@@ -111,6 +111,18 @@ class DomainTest {
     }
 
     @Test
+    fun renderOfClosedShiftIncludesPhaseAndRequiredMarks() {
+        val closed = (acknowledge(pendingShift(), Role.PHARMACIST) as DomainResult.Ok<Shift>).value
+        assertEquals(Phase.CLOSED, closed.phase)
+        val text = render(closed)
+        assertTrue(text.startsWith("AB\nCLOSED\n"))
+        assertTrue(text.contains("[x] Fridge temp logged (required)"))
+        assertTrue(text.contains("[x] Waiting bin walked (required)"))
+        assertTrue(text.contains("[x] Control log signed (required)"))
+        assertFalse(text.contains("[ ] Waiting bin walked"))
+    }
+
+    @Test
     fun clearingDoneClearsTheNote() {
         val done = (toggleItem(seedShift(), "controls") as DomainResult.Ok<Shift>).value
         val noted = (setNote(done, "controls", "signed at close") as DomainResult.Ok<Shift>).value

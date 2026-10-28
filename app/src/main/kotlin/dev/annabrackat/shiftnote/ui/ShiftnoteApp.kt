@@ -32,10 +32,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.annabrackat.shiftnote.DomainResult
+import dev.annabrackat.shiftnote.Phase
 import dev.annabrackat.shiftnote.Role
 import dev.annabrackat.shiftnote.Shift
 import dev.annabrackat.shiftnote.acknowledge
 import dev.annabrackat.shiftnote.reopen
+import dev.annabrackat.shiftnote.render
 import dev.annabrackat.shiftnote.seedShift
 import dev.annabrackat.shiftnote.setNote
 import dev.annabrackat.shiftnote.submit
@@ -106,63 +108,76 @@ fun ShiftnoteApp(model: ShiftViewModel = viewModel()) {
         model.error?.let { message ->
             Text(message, color = Danger, style = MaterialTheme.typography.bodyMedium)
         }
-        model.shift.items.forEach { item ->
-            Column(
+        if (model.shift.phase == Phase.CLOSED) {
+            Text(
+                render(model.shift),
+                color = Ink,
+                style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(1.dp, Line, RoundedCornerShape(16.dp))
                     .background(Surface, RoundedCornerShape(16.dp))
                     .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(
-                        checked = item.done,
-                        onCheckedChange = { model.onToggle(item.id) },
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = Navy,
-                            uncheckedColor = Muted,
-                        ),
-                    )
-                    Column {
-                        Text(item.label, fontWeight = FontWeight.Medium, color = Ink)
-                        if (item.required) {
-                            Text(
-                                "Required",
-                                color = Navy,
-                                style = MaterialTheme.typography.labelMedium,
-                            )
+            )
+        } else {
+            model.shift.items.forEach { item ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Line, RoundedCornerShape(16.dp))
+                        .background(Surface, RoundedCornerShape(16.dp))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = item.done,
+                            onCheckedChange = { model.onToggle(item.id) },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = Navy,
+                                uncheckedColor = Muted,
+                            ),
+                        )
+                        Column {
+                            Text(item.label, fontWeight = FontWeight.Medium, color = Ink)
+                            if (item.required) {
+                                Text(
+                                    "Required",
+                                    color = Navy,
+                                    style = MaterialTheme.typography.labelMedium,
+                                )
+                            }
                         }
                     }
+                    OutlinedTextField(
+                        value = item.note,
+                        onValueChange = { model.onNote(item.id, it) },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Note") },
+                        singleLine = true,
+                    )
                 }
-                OutlinedTextField(
-                    value = item.note,
-                    onValueChange = { model.onNote(item.id, it) },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Note") },
-                    singleLine = true,
-                )
             }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Button(
+                    onClick = model::onSubmit,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Navy, contentColor = Surface),
+                ) { Text("Submit") }
+                Button(
+                    onClick = model::onAcknowledge,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Navy, contentColor = Surface),
+                ) { Text("Acknowledge") }
+            }
+            TextButton(
+                onClick = model::onReopen,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            ) { Text("Reopen", color = Navy) }
         }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Button(
-                onClick = model::onSubmit,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Navy, contentColor = Surface),
-            ) { Text("Submit") }
-            Button(
-                onClick = model::onAcknowledge,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Navy, contentColor = Surface),
-            ) { Text("Acknowledge") }
-        }
-        TextButton(
-            onClick = model::onReopen,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        ) { Text("Reopen", color = Navy) }
     }
 }
 

@@ -123,6 +123,15 @@ class DomainTest {
     }
 
     @Test
+    fun renderOmitsItemNotes() {
+        val done = (toggleItem(seedShift(), "fridge") as DomainResult.Ok<Shift>).value
+        val noted = (setNote(done, "fridge", "temp 4C") as DomainResult.Ok<Shift>).value
+        val text = render(noted)
+        assertFalse(text.contains("temp 4C"))
+        assertTrue(text.contains("[x] Fridge temp logged (required)"))
+    }
+
+    @Test
     fun clearingDoneClearsTheNote() {
         val done = (toggleItem(seedShift(), "controls") as DomainResult.Ok<Shift>).value
         val noted = (setNote(done, "controls", "signed at close") as DomainResult.Ok<Shift>).value

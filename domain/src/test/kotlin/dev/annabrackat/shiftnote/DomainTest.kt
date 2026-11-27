@@ -81,6 +81,16 @@ class DomainTest {
     }
 
     @Test
+    fun setNoteRejectedWhenPhaseIsNotOpen() {
+        val pending = pendingShift()
+        val item = pending.items.first { it.done }
+        val result = setNote(pending, item.id, "late note")
+        assertEquals("phase", (result as DomainResult.Err).code)
+        assertEquals("", pending.items.first { it.id == item.id }.note)
+        assertEquals(Phase.PENDING_ACK, pending.phase)
+    }
+
+    @Test
     fun closedShiftCannotReopen() {
         val closed = (acknowledge(pendingShift(), Role.PHARMACIST) as DomainResult.Ok<Shift>).value
         assertEquals(Phase.CLOSED, closed.phase)

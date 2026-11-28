@@ -176,6 +176,17 @@ class DomainTest {
         assertEquals(pending.items, opened.value.items)
     }
 
+    @Test
+    fun toggleItemRejectedWhenPhaseIsClosed() {
+        val closed = (acknowledge(pendingShift(), Role.PHARMACIST) as DomainResult.Ok<Shift>).value
+        assertEquals(Phase.CLOSED, closed.phase)
+        val item = closed.items.first { it.done }
+        val result = toggleItem(closed, item.id)
+        assertEquals("phase", (result as DomainResult.Err).code)
+        assertTrue(closed.items.first { it.id == item.id }.done)
+        assertEquals(Phase.CLOSED, closed.phase)
+    }
+
     private fun withRequiredDone(shift: Shift = seedShift()): Shift =
         shift.items.filter { it.required }.fold(shift) { current, item ->
             (toggleItem(current, item.id) as DomainResult.Ok<Shift>).value

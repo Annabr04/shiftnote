@@ -91,6 +91,16 @@ class DomainTest {
     }
 
     @Test
+    fun toggleItemRejectedWhenPhaseIsNotOpen() {
+        val pending = pendingShift()
+        val item = pending.items.first { it.done }
+        val result = toggleItem(pending, item.id)
+        assertEquals("phase", (result as DomainResult.Err).code)
+        assertTrue(pending.items.first { it.id == item.id }.done)
+        assertEquals(Phase.PENDING_ACK, pending.phase)
+    }
+
+    @Test
     fun closedShiftCannotReopen() {
         val closed = (acknowledge(pendingShift(), Role.PHARMACIST) as DomainResult.Ok<Shift>).value
         assertEquals(Phase.CLOSED, closed.phase)
